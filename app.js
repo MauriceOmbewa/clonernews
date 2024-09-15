@@ -1,73 +1,87 @@
+// Base URL for the Hacker News API
 const API_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
-const ITEMS_PER_PAGE = 10;
-const LIVE_UPDATES_LIMIT = 10;
-let currentPage = 0;
-let currentFilter = 'story';
-let isLoading = false;
-let allLiveUpdates = [];
-let currentItems = [];
 
-// Fetch item details
+// Number of items to show per page
+const ITEMS_PER_PAGE = 10;
+
+// Maximum number of live updates to show
+const LIVE_UPDATES_LIMIT = 10;
+
+// Current page number (starts at 0)
+let currentPage = 0;
+
+// Current filter type (default is 'story')
+let currentFilter = 'story';
+
+// Flag to check if we're currently loading posts
+let isLoading = false;
+
+// Array to store all live updates
+let allLiveUpdates = [];
+
+// Array to store all fetched item IDs
+let allItemIds = [];
+
+// Function to fetch a single item's details
 async function fetchItem(id) {
     const response = await fetch(`${API_BASE_URL}/item/${id}.json`);
     return await response.json();
 }
 
-// Fetch items based on current filter
-async function fetchItems() {
+// Function to fetch item IDs based on the current filter
+async function fetchItemIds() {
     let endpoint;
-    switch (currentFilter) {
-        case 'story':
-            endpoint = `${API_BASE_URL}/newstories.json`;
-            break;
-        case 'job':
-            endpoint = `${API_BASE_URL}/jobstories.json`;
-            break;
-        case 'poll':
-            endpoint = `${API_BASE_URL}/pollstories.json`;
-            break;
+    if (currentFilter === 'story') {
+        endpoint = `${API_BASE_URL}/newstories.json`;
+    } else if (currentFilter === 'job') {
+        endpoint = `${API_BASE_URL}/jobstories.json`;
+    } else if (currentFilter === 'poll') {
+        endpoint = `${API_BASE_URL}/pollstories.json`;
     }
+    
     const response = await fetch(endpoint);
     return await response.json();
 }
 
-async function fetchPosts() {
+// Function to fetch and display posts
+async function fetchAndDisplayPosts() {
+    // If we're already loading posts, don't start a new fetch
     if (isLoading) return;
+    
+    // Set loading flag to true
     isLoading = true;
 
-    if (currentItems.length === 0) {
-        currentItems = await fetchItems();
+    // If we haven't fetched any item IDs yet, fetch them
+    if (allItemIds.length === 0) {
+        allItemIds = await fetchItemIds();
     }
 
-    const postsList = document.getElementById('posts-list');
+    // Calculate the start and end index for the current page
     const startIndex = currentPage * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const itemsToFetch = currentItems.slice(startIndex, endIndex);
 
-    const posts = await Promise.all(itemsToFetch.map(fetchItem));
+    // Get the IDs for the current page
+    const currentPageIds = allItemIds.slice(startIndex, endIndex);
+
+    // Fetch details for each item
+    const posts = await Promise.all(currentPageIds.map(fetchItem));
+
+    // Sort posts by time (newest first)
     posts.sort((a, b) => b.time - a.time);
 
+    // Display each post
     for (const post of posts) {
         displayPost(post);
     }
 
+    // Increase the page number
     currentPage++;
+
+    // Set loading flag back to false
     isLoading = false;
 }
 
-// Fetch and display comments
-async function fetchComments(commentIds, parentElement, isNested = false) {
-    const comments = await Promise.all(commentIds.map(fetchItem));
-    comments.sort((a, b) => b.time - a.time);
-
-    for (const comment of comments) {
-        if (comment && comment.text) {
-            displayComment(comment, parentElement, isNested);
-        }
-    }
-}
-
-// Display a post
+// Function to display a single post
 function displayPost(post) {
     const postsList = document.getElementById('posts-list');
     const postElement = document.createElement('li');
@@ -97,12 +111,13 @@ function displayPost(post) {
     const postHeader = postElement.querySelector('.post-header');
     const postContent = postElement.querySelector('.post-content');
 
+    // Add click event to toggle post content visibility
     postHeader.addEventListener('click', () => {
         if (postContent.style.display === 'none' || postContent.style.display === '') {
             postContent.style.display = 'block';
             if (post.kids && !postContent.querySelector('.comment')) {
                 const commentsContainer = postContent.querySelector('.comments-container');
-                fetchComments(post.kids, commentsContainer);
+                fetchAndDisplayComments(post.kids, commentsContainer);
             }
         } else {
             postContent.style.display = 'none';
@@ -112,7 +127,19 @@ function displayPost(post) {
     postsList.appendChild(postElement);
 }
 
-// Display a comment
+// Function to fetch and display comments
+async function fetchAndDisplayComments(commentIds, parentElement, isNested = false) {
+    const comments = await Promise.all(commentIds.map(fetchItem));
+    comments.sort((a, b) => b.time - a.time);
+
+    for (const comment of comments) {
+        if (comment && comment.text) {
+            displayComment(comment, parentElement, isNested);
+        }
+    }
+}
+
+// Function to display a single comment
 function displayComment(comment, parentElement, isNested = false) {
     const commentElement = document.createElement('div');
     commentElement.classList.add('comment');
@@ -137,7 +164,7 @@ function displayComment(comment, parentElement, isNested = false) {
             const subCommentsContainer = document.createElement('div');
             subCommentsContainer.classList.add('sub-comments-container');
             commentElement.appendChild(subCommentsContainer);
-            fetchComments(comment.kids, subCommentsContainer, true);
+            fetchAndDisplayComments(comment.kids, subCommentsContainer, true);
             showRepliesButton.style.display = 'none';
         });
         commentElement.appendChild(showRepliesButton);
@@ -146,25 +173,35 @@ function displayComment(comment, parentElement, isNested = false) {
     parentElement.appendChild(commentElement);
 }
 
-// Format timestamp
+// Function to format timestamp
 function formatTimestamp(timestamp) {
     return new Date(timestamp * 1000).toLocaleString();
 }
 
-// Update live data
+// Function to update live data
 async function updateLiveData() {
-    const latestItems = await fetchItems();
-    const newItems = latestItems.filter(id => !currentItems.includes(id));
+    const latestItemIds = await fetchItemIds();
     
-    if (newItems.length > 0) {
-        const newPosts = await Promise.all(newItems.slice(0, LIVE_UPDATES_LIMIT).map(fetchItem));
-        allLiveUpdates = [...newPosts, ...allLiveUpdates].slice(0, LIVE_UPDATES_LIMIT);
+    // If allItemIds is empty, this is the first run
+    if (allItemIds.length === 0) {
+        allItemIds = latestItemIds;
+        // Display the first LIVE_UPDATES_LIMIT items as live updates
+        const initialUpdates = await Promise.all(latestItemIds.slice(0, LIVE_UPDATES_LIMIT).map(fetchItem));
+        allLiveUpdates = initialUpdates;
         displayLiveUpdates();
-        currentItems = latestItems;
+    } else {
+        const newItemIds = latestItemIds.filter(id => !allItemIds.includes(id));
+        
+        if (newItemIds.length > 0) {
+            const newPosts = await Promise.all(newItemIds.slice(0, LIVE_UPDATES_LIMIT).map(fetchItem));
+            allLiveUpdates = [...newPosts, ...allLiveUpdates].slice(0, LIVE_UPDATES_LIMIT);
+            displayLiveUpdates();
+            allItemIds = latestItemIds;
+        }
     }
 }
 
-// Display live updates
+// Function to display live updates
 function displayLiveUpdates() {
     const liveUpdatesList = document.getElementById('live-updates-list');
     liveUpdatesList.innerHTML = '';
@@ -178,38 +215,56 @@ function displayLiveUpdates() {
         `;
         listItem.addEventListener('click', () => {
             displayPost(item);
-            document.getElementById('posts-list').prepend(document.querySelector(`#posts-list .post:last-child`));
+            document.getElementById('posts-list').prepend(document.querySelector('#posts-list .post:last-child'));
         });
         liveUpdatesList.appendChild(listItem);
     });
 }
 
-// Initialize the application
-function init() {
-    fetchPosts();
+// Function to handle filter button clicks
+function handleFilterClick(event) {
+    // Remove 'active' class from all buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Add 'active' class to the clicked button
+    event.target.classList.add('active');
+    
+    // Update the current filter
+    currentFilter = event.target.dataset.type;
+    
+    // Reset the page number and clear the posts list
+    currentPage = 0;
+    document.getElementById('posts-list').innerHTML = '';
+    
+    // Clear the fetched item IDs and live updates
+    allItemIds = [];
+    allLiveUpdates = [];
+    
+    // Fetch and display posts with the new filter
+    fetchAndDisplayPosts();
     updateLiveData();
+}
+
+// Function to initialize the application
+async function init() {
+    // Fetch initial data and display posts
+    allItemIds = await fetchItemIds();
+    await fetchAndDisplayPosts();
+
+    // Start live updates
+    await updateLiveData();
     setInterval(updateLiveData, 5000);
 
-    // Infinite scroll
+    // Add scroll event listener for infinite scrolling
     window.addEventListener('scroll', () => {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
-            fetchPosts();
+            fetchAndDisplayPosts();
         }
     });
 
-    // Filter buttons
+    // Add click event listeners to filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentFilter = e.target.dataset.type;
-            document.getElementById('posts-list').innerHTML = '';
-            currentPage = 0;
-            currentItems = [];
-            allLiveUpdates = [];
-            fetchPosts();
-            updateLiveData();
-        });
+        btn.addEventListener('click', handleFilterClick);
     });
 }
 
