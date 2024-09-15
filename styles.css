@@ -123,3 +123,40 @@ li:hover {
     padding: 0.5rem;
 }
 
+#show-more-updates {
+    display: block;
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+#show-more-updates:hover {
+    background-color: #e65c00;
+}
+
+.story {
+    border-left: 5px solid #4CAF50;
+}
+
+.job {
+    border-left: 5px solid #2196F3;
+}
+
+.poll {
+    border-left: 5px solid #9C27B0;
+}
+
+.comment {
+    border-left: 5px solid #FF9800;
+}
+
+.nested-comment {
+    margin-left: 20px;
+    border-left: 2px solid #ff6600;
+    padding-left: 10px;
+}
