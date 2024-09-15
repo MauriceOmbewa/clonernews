@@ -3,18 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hacker News UI</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #posts { margin: 20px; }
-        .post { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; }
-        .comments { margin-left: 20px; }
-    </style>
+    <title>HackerNews UI</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Hacker News</h1>
-    <div id="posts"></div>
-    <button id="load-more">Load More</button>
+    <header>
+        <h1>HackerNews UI</h1>
+        <nav>
+            <button class="filter-btn active" data-type="all">All</button>
+            <button class="filter-btn" data-type="story">Stories</button>
+            <button class="filter-btn" data-type="job">Jobs</button>
+            <button class="filter-btn" data-type="poll">Polls</button>
+        </nav>
+    </header>
+    <div class="container">
+        <main>
+            <section id="posts">
+                <h2>Posts</h2>
+                <ul id="posts-list"></ul>
+            </section>
+        </main>
+        <aside>
+            <section id="live-updates">
+                <h2>Live Updates</h2>
+                <ul id="live-updates-list"></ul>
+            </section>
+        </aside>
+    </div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-post-content"></div>
+        </div>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
