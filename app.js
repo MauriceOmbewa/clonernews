@@ -1,25 +1,11 @@
 const API_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
 const ITEMS_PER_PAGE = 10;
-const LIVE_UPDATES_LIMIT = 15;
+const LIVE_UPDATES_LIMIT = 10;
 let currentPage = 0;
 let currentFilter = 'story';
 let isLoading = false;
 let allLiveUpdates = [];
 let currentItems = [];
-
-// Throttle function to limit API requests
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    }
-}
 
 // Fetch item details
 async function fetchItem(id) {
@@ -32,7 +18,7 @@ async function fetchItems() {
     let endpoint;
     switch (currentFilter) {
         case 'story':
-            endpoint = `${API_BASE_URL}/showstories.json`;
+            endpoint = `${API_BASE_URL}/newstories.json`;
             break;
         case 'job':
             endpoint = `${API_BASE_URL}/jobstories.json`;
@@ -70,13 +56,13 @@ async function fetchPosts() {
 }
 
 // Fetch and display comments
-async function fetchComments(commentIds, parentElement) {
+async function fetchComments(commentIds, parentElement, isNested = false) {
     const comments = await Promise.all(commentIds.map(fetchItem));
     comments.sort((a, b) => b.time - a.time);
 
     for (const comment of comments) {
         if (comment && comment.text) {
-            displayComment(comment, parentElement);
+            displayComment(comment, parentElement, isNested);
         }
     }
 }
@@ -85,49 +71,76 @@ async function fetchComments(commentIds, parentElement) {
 function displayPost(post) {
     const postsList = document.getElementById('posts-list');
     const postElement = document.createElement('li');
-    postElement.id = `post-${post.id}`;
-    postElement.classList.add(post.type);
+    postElement.classList.add('post');
 
-    let title = post.title || post.type;
+    const title = post.title || post.type;
     const formattedTime = formatTimestamp(post.time);
+    const commentCount = post.kids ? post.kids.length : 0;
 
     postElement.innerHTML = `
-        <h3>${title}</h3>
-        <p>Type: ${post.type}</p>
-        <p>By: ${post.by || 'Anonymous'}</p>
-        <p>Score: ${post.score || 'N/A'}</p>
-        <p>Posted: ${formattedTime}</p>
-        ${post.url ? `<p><a href="${post.url}" target="_blank">Read more</a></p>` : ''}
-        ${post.text ? `<p>${post.text}</p>` : ''}
-        <div class="comments-container"></div>
+        <div class="post-header">
+            <h3>${title}</h3>
+            <div class="post-meta">
+                <p>Posted: ${formattedTime}</p>
+                <p>Comments: ${commentCount}</p>
+            </div>
+        </div>
+        <div class="post-content">
+            <p>By: ${post.by || 'Anonymous'}</p>
+            <p>Score: ${post.score || 'N/A'}</p>
+            ${post.url ? `<p><a href="${post.url}" target="_blank">Read more</a></p>` : ''}
+            ${post.text ? `<div class="post-text">${post.text}</div>` : ''}
+            <div class="comments-container"></div>
+        </div>
     `;
 
-    if (post.kids) {
-        const commentsContainer = postElement.querySelector('.comments-container');
-        fetchComments(post.kids, commentsContainer);
-    }
+    const postHeader = postElement.querySelector('.post-header');
+    const postContent = postElement.querySelector('.post-content');
+
+    postHeader.addEventListener('click', () => {
+        if (postContent.style.display === 'none' || postContent.style.display === '') {
+            postContent.style.display = 'block';
+            if (post.kids && !postContent.querySelector('.comment')) {
+                const commentsContainer = postContent.querySelector('.comments-container');
+                fetchComments(post.kids, commentsContainer);
+            }
+        } else {
+            postContent.style.display = 'none';
+        }
+    });
 
     postsList.appendChild(postElement);
 }
 
 // Display a comment
-function displayComment(comment, parentElement) {
+function displayComment(comment, parentElement, isNested = false) {
     const commentElement = document.createElement('div');
     commentElement.classList.add('comment');
+    if (isNested) {
+        commentElement.classList.add('nested-comment');
+    }
 
     const formattedTime = formatTimestamp(comment.time);
 
     commentElement.innerHTML = `
-        <p>${comment.text}</p>
-        <p>By: ${comment.by || 'Anonymous'}</p>
-        <p>Posted: ${formattedTime}</p>
+        <div class="comment-content">${comment.text}</div>
+        <div class="comment-meta">
+            <p>By: ${comment.by || 'Anonymous'}</p>
+            <p>Posted: ${formattedTime}</p>
+        </div>
     `;
 
     if (comment.kids) {
-        const subCommentsContainer = document.createElement('div');
-        subCommentsContainer.classList.add('sub-comments-container');
-        commentElement.appendChild(subCommentsContainer);
-        fetchComments(comment.kids, subCommentsContainer);
+        const showRepliesButton = document.createElement('button');
+        showRepliesButton.textContent = `Show ${comment.kids.length} replies`;
+        showRepliesButton.addEventListener('click', () => {
+            const subCommentsContainer = document.createElement('div');
+            subCommentsContainer.classList.add('sub-comments-container');
+            commentElement.appendChild(subCommentsContainer);
+            fetchComments(comment.kids, subCommentsContainer, true);
+            showRepliesButton.style.display = 'none';
+        });
+        commentElement.appendChild(showRepliesButton);
     }
 
     parentElement.appendChild(commentElement);
@@ -144,8 +157,8 @@ async function updateLiveData() {
     const newItems = latestItems.filter(id => !currentItems.includes(id));
     
     if (newItems.length > 0) {
-        const newPosts = await Promise.all(newItems.map(fetchItem));
-        allLiveUpdates = [...newPosts, ...allLiveUpdates];
+        const newPosts = await Promise.all(newItems.slice(0, LIVE_UPDATES_LIMIT).map(fetchItem));
+        allLiveUpdates = [...newPosts, ...allLiveUpdates].slice(0, LIVE_UPDATES_LIMIT);
         displayLiveUpdates();
         currentItems = latestItems;
     }
@@ -155,44 +168,27 @@ async function updateLiveData() {
 function displayLiveUpdates() {
     const liveUpdatesList = document.getElementById('live-updates-list');
     liveUpdatesList.innerHTML = '';
-    const updatesToShow = allLiveUpdates.slice(0, LIVE_UPDATES_LIMIT);
     
-    updatesToShow.forEach(item => {
+    allLiveUpdates.forEach((item) => {
         const listItem = document.createElement('li');
-        listItem.textContent = `New ${item.type}: ${item.title || 'Item'}`;
+        const formattedTime = formatTimestamp(item.time);
+        listItem.innerHTML = `
+            ${item.type}: ${item.title || 'Item'}
+            <div class="live-update-time">${formattedTime}</div>
+        `;
         listItem.addEventListener('click', () => {
             displayPost(item);
-            document.getElementById('posts-list').prepend(document.getElementById(`post-${item.id}`));
+            document.getElementById('posts-list').prepend(document.querySelector(`#posts-list .post:last-child`));
         });
         liveUpdatesList.appendChild(listItem);
     });
-
-    const showMoreButton = document.getElementById('show-more-updates');
-    showMoreButton.style.display = allLiveUpdates.length > LIVE_UPDATES_LIMIT ? 'block' : 'none';
-}
-
-// Show all live updates
-function showAllLiveUpdates() {
-    const liveUpdatesList = document.getElementById('live-updates-list');
-    liveUpdatesList.innerHTML = '';
-    
-    allLiveUpdates.forEach(item => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `New ${item.type}: ${item.title || 'Item'}`;
-        listItem.addEventListener('click', () => {
-            displayPost(item);
-            document.getElementById('posts-list').prepend(document.getElementById(`post-${item.id}`));
-        });
-        liveUpdatesList.appendChild(listItem);
-    });
-
-    document.getElementById('show-more-updates').style.display = 'none';
 }
 
 // Initialize the application
 function init() {
     fetchPosts();
-    setInterval(throttle(updateLiveData, 5000), 5000);
+    updateLiveData();
+    setInterval(updateLiveData, 5000);
 
     // Infinite scroll
     window.addEventListener('scroll', () => {
@@ -210,12 +206,11 @@ function init() {
             document.getElementById('posts-list').innerHTML = '';
             currentPage = 0;
             currentItems = [];
+            allLiveUpdates = [];
             fetchPosts();
+            updateLiveData();
         });
     });
-
-    // Show more updates button
-    document.getElementById('show-more-updates').addEventListener('click', showAllLiveUpdates);
 }
 
 // Start the application when the DOM is loaded

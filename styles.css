@@ -56,7 +56,7 @@ ul {
     padding: 0;
 }
 
-li {
+.post {
     background-color: white;
     margin-bottom: 1rem;
     padding: 1rem;
@@ -64,37 +64,52 @@ li {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.comment {
-    margin-left: 1rem;
-    border-left: 2px solid #ff6600;
-    padding-left: 1rem;
+.post-header {
+    cursor: pointer;
+}
+
+.post-content {
+    display: none;
     margin-top: 1rem;
 }
 
-.sub-comments-container {
-    margin-left: 1rem;
+.comment {
+    background-color: #f9f9f9;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 5px;
+    border-left: 3px solid #ff6600;
+}
+
+.nested-comment {
+    margin-left: 2rem;
+    border-left-color: #ff8533;
 }
 
 #live-updates-list li {
     cursor: pointer;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
 }
 
 #live-updates-list li:hover {
-    background-color: #f9f9f9;
+    background-color: #f0f0f0;
 }
 
-#show-more-updates {
-    display: block;
-    width: 100%;
-    padding: 0.5rem;
-    background-color: #ff6600;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    margin-top: 1rem;
+#live-updates-list li:last-child {
+    border-bottom: none;
 }
 
-#show-more-updates:hover {
-    background-color: #e65c00;
+.post-meta, .comment-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.post-meta p, .comment-meta p {
+    margin: 0.2em 0;
+}
+
+.live-update-time {
+    font-size: 0.8em;
+    color: #666;
 }
