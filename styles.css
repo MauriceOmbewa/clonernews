@@ -7,7 +7,7 @@ body {
 }
 
 header {
-    background-color: #ff6600;
+    background-color: #008080; /* Teal */
     color: white;
     text-align: center;
     padding: 1rem;
@@ -18,7 +18,7 @@ nav {
 }
 
 .filter-btn {
-    background-color: #ff8533;
+    background-color: #00a3a3; /* Lighter Teal */
     border: none;
     color: white;
     padding: 0.5rem 1rem;
@@ -28,7 +28,7 @@ nav {
 }
 
 .filter-btn.active {
-    background-color: #e65c00;
+    background-color: #006666; /* Darker Teal */
 }
 
 .container {
@@ -78,12 +78,12 @@ ul {
     margin-top: 1rem;
     padding: 1rem;
     border-radius: 5px;
-    border-left: 3px solid #ff6600;
+    border-left: 3px solid #008080; /* Teal */
 }
 
 .nested-comment {
     margin-left: 2rem;
-    border-left-color: #ff8533;
+    border-left-color: #00a3a3; /* Lighter Teal */
 }
 
 #live-updates-list li {
