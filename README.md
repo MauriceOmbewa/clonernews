@@ -17,7 +17,7 @@
 
 1. Clone the repo:
  ```bash
-  $ git clone https://learn.zone01kisumu.ke/git/mombewa/clonernews.git
+  $ git clone https://github.com/MauriceOmbewa/clonernews.git
  ```
 
 2. Navigate to the directory:
@@ -38,6 +38,4 @@ $ npm test
 
 
 ## Authors
-* Maurice Ombewa
-* Valeria Muhembe
-* Rabin Otieno
+* Maurice Ombewa {@https://github.com/MauriceOmbewa}
