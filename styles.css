@@ -1,9 +1,20 @@
+/*light mode*/
 body {
     font-family: Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
+}
+
+/* Dark Mode */
+body.dark-mode {
+    background-color: #292929;
+
+}
+
+h2.dark-mode{
+color: white;
 }
 
 header {
@@ -27,8 +38,19 @@ nav {
     border-radius: 3px;
 }
 
+
+.filter-btn:hover {
+    background-color: white; /* Changes background to white on hover */
+    color: #00a3a3; /* Changes text color to teal on hover */
+}
+
 .filter-btn.active {
     background-color: #006666; /* Darker Teal */
+}
+
+.filter-btn.active:hover {
+    background-color: white; 
+    color: #00a3a3; 
 }
 
 .container {
@@ -64,8 +86,17 @@ ul {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+.post:hover {
+    transform: translateY(-5px); /* Lifts the post slightly */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Increases the shadow on hover */
+}
+
 .post-header {
     cursor: pointer;
+}
+
+.post-header:hover {
+    color: #00a3a3; 
 }
 
 .post-content {
@@ -86,11 +117,14 @@ ul {
     border-left-color: #00a3a3; /* Lighter Teal */
 }
 
+
 #live-updates-list li {
     cursor: pointer;
     padding: 0.5rem;
     border-bottom: 1px solid #ddd;
+    background-color: #E6E6FA; /*lavender*/
 }
+
 
 #live-updates-list li:hover {
     background-color: #f0f0f0;
@@ -112,4 +146,15 @@ ul {
 .live-update-time {
     font-size: 0.8em;
     color: #666;
+}
+
+#theme-toggle {
+    background-color: #00a3a3; /* Lighter Teal */
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    cursor: pointer;
+    border-radius: 3px;
+    
 }

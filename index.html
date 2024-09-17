@@ -8,27 +8,30 @@
 </head>
 <body>
     <header>
-        <h1>HackerNews UI</h1>
+        <h1>✨✨ HackerNews  UI ✨✨</h1>
         <nav>
             <button class="filter-btn active" data-type="story">Stories</button>
             <button class="filter-btn" data-type="job">Jobs</button>
             <button class="filter-btn" data-type="poll">Polls</button>
+            <button id="theme-toggle">Switch to Dark Mode</button>
+
         </nav>
     </header>
     <div class="container">
         <main>
             <section id="posts">
-                <h2>Posts</h2>
+                <h2 id="head">Posts</h2>
                 <ul id="posts-list"></ul>
             </section>
         </main>
         <aside>
             <section id="live-updates">
-                <h2>Live Updates</h2>
+                <h2 id="heading">Live Updates</h2>
                 <ul id="live-updates-list"></ul>
             </section>
         </aside>
     </div>
     <script src="app.js"></script>
+    <script src="dark-mode.js"></script>
 </body>
 </html>
