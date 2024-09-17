@@ -38,4 +38,4 @@ $ npm test
 
 
 ## Authors
-* Maurice Ombewa {@https://github.com/MauriceOmbewa}
+* [Maurice Ombewa](https://github.com/MauriceOmbewa)
